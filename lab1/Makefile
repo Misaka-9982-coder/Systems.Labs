@@ -8,7 +8,13 @@ format:
 	clang-format -style=Google -i reverse.c
 
 clean:
-	rm -f reverse_test
+	rm -f reverse_test test_reverse.o reverse.o
 
-reverse_test: test_reverse.c reverse.c reverse.h
+test_reverse.o: test_reverse.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+reverse.o: reverse.c reverse.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+reverse_test: test_reverse.o reverse.o
 	gcc $(CFLAGS) $^ -o $@
