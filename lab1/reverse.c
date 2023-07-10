@@ -17,3 +17,17 @@
  * Given an array ["hello", "my", "name", "is"], after calling reverse_arr
  * will result in ["is", "name", "my", "hello"]
  */
+
+void swap(char** word_a, char** word_b) {
+  char* word_tmp = *word_a;
+  *word_a = *word_b;
+  *word_b = word_tmp;
+}
+
+
+void reverse_arr(char** arr, int num) {
+  for (int i = 0, j = num - 1; i < j; i ++ , j -- ) {
+    printf("%s %s\n", *(arr + i), *(arr + j));
+    swap(arr + i, arr + j);
+  }
+}
