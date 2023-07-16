@@ -86,7 +86,13 @@ void kernel(const char* command) {
     // console_printf("WeensyOS has booted, but there are no processes running!\n");
     
     process_setup(1, "allocator");
+    process_setup(2, "allocator2");
+    process_setup(3, "allocator3");
+    process_setup(4, "allocator4");
     run(&ptable[1]);
+    run(&ptable[2]);
+    run(&ptable[3]);
+    run(&ptable[4]);
 
     while (true) {
         check_keyboard();
