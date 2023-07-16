@@ -393,7 +393,7 @@ void run(proc* p) {
 void memshow() {
     static unsigned last_ticks = 0;
     static int showing = 0;
-    static int show_virtual = 0;
+    static int show_virtual = 1;
 
     // switch to a new process every 0.25 sec
     if (last_ticks == 0 || ticks - last_ticks >= HZ / 2) {
