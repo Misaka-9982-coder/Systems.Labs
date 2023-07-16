@@ -26,6 +26,7 @@ void process_main() {
     // TODO: Add your code here.
     for (uint8_t* it = heap_top; it < stack_bottom; it += PAGESIZE) {
         sys_page_alloc(it);
+        *it = p;
     }
 
     // Do nothing forever
