@@ -77,6 +77,19 @@ void kernel(const char* command) {
         }
     }
 
+    // Initialize the copy of kernel page table
+    for (vmiter it(kernel_pagetable_copy); it.va() < MEMSIZE_PHYSICAL; it += PAGESIZE) {
+        if (it.va() != 0) {
+            it.map(it.va(), 0); // initially map with no permissions
+        } else {
+            // nullptr is inaccessible even to the kernel
+            it.map(it.va(), 0);
+        }
+    }
+
+    // Call the function to copy the mappings
+    copy_mappings(kernel_pagetable_copy, kernel_pagetable);
+
     // Set up process descriptors.
     for (pid_t i = 0; i < NPROC; i++) {
         ptable[i].pid = i;
@@ -96,6 +109,39 @@ void kernel(const char* command) {
 
     while (true) {
         check_keyboard();
+    }
+}
+
+void copy_mappings(x86_64_pagetable* dst, x86_64_pagetable* src) {
+    // Copy all virtual memory mappings from `src` into `dst`
+    // for addresses in the range [0, MEMSIZE_VIRTUAL).
+    // You may assume that `dst` starts out empty (has no mappings).
+    
+    // For our grading purposes, use the following line to print out
+    // the physical and virtual addresses you're mapping, as well as the 
+    // present, writable, and user-accessible permission bits (in that order): 
+    // log_printf("VA %p maps to PA %p with PERMS %p, %p, %p\n", ...);
+    //
+    // Make sure to use the exact same format string above, but fill
+    // out the rest of the line.
+
+    // After this function completes, for any virtual address `va` with
+    // 0 <= va < MEMSIZE_VIRTUAL, `dst` and `src` should map that va
+    // to the same physical address with the same permissions.
+    for (vmiter it(src, 0); it.va() < MEMSIZE_VIRTUAL; it += PAGESIZE) {
+        if (it.present()) {
+            uintptr_t va = it.va();
+            uint64_t pa = it.pa();
+            uint64_t perm = it.perm();
+            vmiter(dst, va).map(pa, perm);
+
+            // Printing the mapping and permissions
+            bool present = (perm & PTE_P) != 0;
+            bool writable = (perm & PTE_W) != 0;
+            bool user_accessible = (perm & PTE_U) != 0;
+            log_printf("VA %p maps to PA %p with PERMS %p, %p, %p\n", 
+                        va, pa, present, writable, user_accessible);
+        }
     }
 }
 
