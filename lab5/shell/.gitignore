@@ -1,1 +1,3 @@
 300sh
+builtin.o
+sh.o

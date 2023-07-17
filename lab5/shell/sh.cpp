@@ -1,5 +1,5 @@
 #include "builtin.h"
-
+#include<iostream>
 using namespace std;
 
 #define MAX_BUF_SIZE 1024
@@ -49,6 +49,24 @@ void do_fork(char* args[]) {
    * 1) fork into a child process to execute the function
    * 2) Outside of the child process, wait for the new process to finish
    */
+  pid_t pid = fork();
+
+  if (pid < 0) {  // Error during forking.
+    fprintf(stderr, "Fork failed.\n");
+    return;
+  }
+  
+  if (pid == 0) {  // Child process.
+    // Replace the process image with the new command.
+    if (execv(args[0], args) < 0) {
+      fprintf(stderr, "Exec failed.\n");
+      return;
+    }
+  } else {  // Parent process.
+    // 2) Wait for the child process to finish.
+    int status;
+    waitpid(pid, &status, 0);
+  }
 }
 
 /*
