@@ -29,7 +29,7 @@ int run_workers(vector<wordindex>& files, vector<string> filenames,
   vector<thread> threads;
   int total_occurrences = 0;
 
-  for (int i = 0; i < num_threads; ++i) {
+  for (int i = 0; i < num_threads; i ++ ) {
     // Create a new index object for the file being processed by the thread and
     // add it to the files vector
     files.emplace_back();
@@ -47,7 +47,7 @@ int run_workers(vector<wordindex>& files, vector<string> filenames,
   }
 
   // Compute total occurrences
-  for (int i = start_pos; i < start_pos + num_threads; ++i) {
+  for (int i = start_pos; i < start_pos + num_threads; i ++ ) {
     total_occurrences += files[i].indexes.size();
   }
 
