@@ -26,12 +26,33 @@ int run_workers(vector<wordindex>& files, vector<string> filenames,
   // 1) create a new index object for the file being processes by the thread and
   //    add it to the files vector
   // 2) create the thread to run find_word with the proper arguments
+  vector<thread> threads;
+  int total_occurrences = 0;
 
+  for (int i = 0; i < num_threads; ++i) {
+    // Create a new index object for the file being processed by the thread and
+    // add it to the files vector
+    files.emplace_back();
+    files.back().filename = filenames[start_pos + i];
+
+    // Create the thread to run find_word with the proper arguments
+    threads.emplace_back(find_word, &files.back(), word);
+  }
   // join with each thread and add the count field of each index to the total
   // sum
+  for (auto& t : threads) {
+    if (t.joinable()) {
+      t.join();
+    }
+  }
+
+  // Compute total occurrences
+  for (int i = start_pos; i < start_pos + num_threads; ++i) {
+    total_occurrences += files[i].indexes.size();
+  }
 
   // return the total sum for this batch of files
-  return 0;
+  return total_occurrences;
 }
 
 /* The main REPL for the program
