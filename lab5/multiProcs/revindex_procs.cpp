@@ -72,7 +72,26 @@ void deserialize_word_index(wordindex* ind, char* buffer) {
  *            an int* representing the pipe for this process, cpipe
  * Return value: none
  */
-void process_file(string term, string filename, int* cpipe) {}
+void process_file(string term, string filename, int* cpipe) {
+  close(cpipe[0]);  // Close reading end of the pipe.
+  
+  wordindex file;
+  file.filename = filename;
+  find_word(&file, term);  // Search for the term in file.
+
+  string serializedIndex = serialize_word_index(&file); // Serialize the wordindex object.
+  
+  // Write the size of the serializedIndex to the pipe.
+  int len = serializedIndex.size();
+  write(cpipe[1], &len, sizeof(int));
+  
+  // Write the serializedIndex to the pipe.
+  write(cpipe[1], serializedIndex.c_str(), len);
+  
+  close(cpipe[1]); // Close writing end of the pipe.
+
+  exit(0);  // Exit the child process.
+}
 
 /*TODO
  * In this function, you should:
@@ -86,7 +105,26 @@ void process_file(string term, string filename, int* cpipe) {}
  *            an int* representing the pipe for this process, ppipe
  * Return value: none
  */
-void read_process_results(wordindex* ind, int* ppipe) {}
+void read_process_results(wordindex* ind, int* ppipe) {
+  close(ppipe[1]);  // Close writing end of the pipe.
+  
+  int size;
+  // Read the size of the serialized data from the pipe.
+  read(ppipe[0], &size, sizeof(int));
+  
+  char* buffer = new char[size + 1];
+  // Read the serialized data from the pipe.
+  read(ppipe[0], buffer, size);
+  
+  // Ensure the buffer is null-terminated.
+  buffer[size] = '\0';
+  
+  deserialize_word_index(ind, buffer);  // Convert the data back into a wordindex object.
+  
+  delete[] buffer;
+  
+  close(ppipe[0]);  // Close reading end of the pipe.
+}
 
 /*TODO
  * Complete this function following the comments
@@ -123,6 +161,15 @@ int process_input(string term, vector<string>& filenames, int** pipes,
      * 2) fork into a child process which runs the process_file function
      * 3) in the parent process, add the child's pid to the array of pids
      */
+    for(int i = 0; i < num_procs; i++) {
+      pipe(pipes[i]);
+      pid = fork();
+      if(pid == 0) {  // Child process.
+        process_file(term, filenames[completed + i], pipes[i]);
+      } else {  // Parent process.
+        pids[i] = pid;
+      }
+    }
 
     /* Read from each pipe
      * For each processes you should do the following:
@@ -133,8 +180,19 @@ int process_input(string term, vector<string>& filenames, int** pipes,
      * 3) add the wordindex object for this file to the fls vector and
      * 4) update the total number of ocurrences accordingly
      */
+    for(int i = 0; i < num_procs; i++) {
+      wordindex file;
+      file.filename = filenames[completed + i];
+      read_process_results(&file, pipes[i]);
+      fls.push_back(file);
+      num_occurrences += file.indexes.size();
+    }
+
 
     // Make sure each process created in this round has completed
+    for(int i = 0; i < num_procs; i++) {
+      waitpid(pids[i], NULL, 0);  // Wait for child processes to finish.
+    }
 
     completed += num_procs;
   }
